@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { formatRupiah } from '../lib/calc';
 import { CartItem, calculateCartTotals, validateCartBeforeCheckout } from '../lib/cart';
-import { THRIFT_CATALOG_ITEMS, ThriftPresetItem } from '../lib/constants';
+import { THRIFT_CATALOG_ITEMS } from '../lib/constants';
 import CashModal from './CashModal';
 import QrisModal from './QrisModal';
+import TransferModal from './TransferModal';
 import ThriftIcon from './ThriftIcons';
 import {
   Calendar,
@@ -18,13 +19,14 @@ import {
   Trash2,
   QrCode,
   Banknote,
+  Landmark,
   Receipt,
   Edit2,
   Check,
-  ChevronDown,
   Sparkles,
   ShoppingBag,
   RotateCcw,
+  CheckCircle,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -35,8 +37,6 @@ export const PosCashier: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [customerName, setCustomerName] = useState<string>("Customer's Name");
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
-  const [selectedLocation, setSelectedLocation] = useState<string>('Booth Mall UG');
-  const [orderType, setOrderType] = useState<string>('Bazar Langsung');
   const [currentTime, setCurrentTime] = useState<string>('');
   const [storeOpen, setStoreOpen] = useState<boolean>(true);
 
@@ -46,8 +46,33 @@ export const PosCashier: React.FC = () => {
   const [customLabel, setCustomLabel] = useState<string>('');
   const [showCashModal, setShowCashModal] = useState<boolean>(false);
   const [showQrisModal, setShowQrisModal] = useState<boolean>(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'qris' | 'tunai'>('qris');
+  const [showTransferModal, setShowTransferModal] = useState<boolean>(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'tunai' | 'qris' | 'transfer'>('tunai');
   const [lastSuccessTrans, setLastSuccessTrans] = useState<any | null>(null);
+
+  // Load storeOpen status from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('rangers_store_open');
+      if (saved !== null) {
+        setStoreOpen(saved === 'true');
+      }
+    } catch {
+      // ignore in SSR
+    }
+  }, []);
+
+  const handleToggleStore = () => {
+    setStoreOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('rangers_store_open', String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
 
   // Live Clock
   useEffect(() => {
@@ -74,14 +99,23 @@ export const PosCashier: React.FC = () => {
   });
 
   const categories = [
-    { id: 'all', label: 'All Menu', count: '120 items', icon: 'all' as const },
-    { id: 'Kaos', label: 'T-Shirts', count: '45 items', icon: 'tshirt' as const },
-    { id: 'Kemeja', label: 'Flannel/Shirts', count: '25 items', icon: 'shirt' as const },
-    { id: 'Crewneck', label: 'Crewnecks', count: '20 items', icon: 'sweater' as const },
-    { id: 'Hoodie', label: 'Hoodies', count: '15 items', icon: 'hoodie' as const },
-    { id: 'Jaket', label: 'Jackets/Denim', count: '15 items', icon: 'jacket' as const },
-    { id: 'Spesial', label: 'Rare Vintage', count: '10 items', icon: 'star' as const },
+    { id: 'all', label: 'All Menu', icon: 'all' as const },
+    { id: 'Kaos', label: 'T-Shirts', icon: 'tshirt' as const },
+    { id: 'Kemeja', label: 'Flannel/Shirts', icon: 'shirt' as const },
+    { id: 'Crewneck', label: 'Crewnecks', icon: 'sweater' as const },
+    { id: 'Celana', label: 'Pants/Denim', icon: 'shirt' as const },
+    { id: 'Hoodie', label: 'Hoodies', icon: 'hoodie' as const },
+    { id: 'Jaket', label: 'Jackets/Denim', icon: 'jacket' as const },
+    { id: 'Spesial', label: 'Rare Vintage', icon: 'star' as const },
   ];
+
+  const getCategoryCount = (catId: string) => {
+    const count =
+      catId === 'all'
+        ? THRIFT_CATALOG_ITEMS.length
+        : THRIFT_CATALOG_ITEMS.filter((item) => item.kategori === catId).length;
+    return `${count} item${count > 1 ? 's' : ''}`;
+  };
 
   // Filter items
   const filteredCatalog = THRIFT_CATALOG_ITEMS.filter((item) => {
@@ -97,6 +131,10 @@ export const PosCashier: React.FC = () => {
   const { valid, reason } = validateCartBeforeCheckout(items, diskon);
 
   const handleAddItem = (nominal: number, label: string) => {
+    if (!storeOpen) {
+      alert('Lapak sedang tutup! Buka lapak di pojok kanan atas untuk mulai transaksi.');
+      return;
+    }
     setItems((prev) => {
       const existingIdx = prev.findIndex((it) => it.harga_satuan === nominal);
       if (existingIdx > -1) {
@@ -126,6 +164,10 @@ export const PosCashier: React.FC = () => {
 
   const handleAddCustomPrice = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!storeOpen) {
+      alert('Lapak sedang tutup! Buka lapak terlebih dahulu.');
+      return;
+    }
     const priceNum = parseInt(customPrice.replace(/\D/g, ''), 10);
     if (!priceNum || priceNum <= 0) return;
 
@@ -136,9 +178,16 @@ export const PosCashier: React.FC = () => {
   };
 
   const handleCheckoutClick = () => {
+    if (!storeOpen) {
+      alert('Lapak sedang tutup! Buka lapak di pojok kanan atas untuk mulai transaksi.');
+      return;
+    }
     if (!valid) return;
+
     if (selectedPaymentMethod === 'qris') {
       setShowQrisModal(true);
+    } else if (selectedPaymentMethod === 'transfer') {
+      setShowTransferModal(true);
     } else {
       setShowCashModal(true);
     }
@@ -161,36 +210,99 @@ export const PosCashier: React.FC = () => {
       });
 
       const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Gagal menyimpan transaksi ke database');
+      }
+
       setShowCashModal(false);
-      setItems([]);
-      setDiskon(0);
       setLastSuccessTrans({
-        ...data.transaction,
+        order_id: data.transaction?.order_id || `TRX-${Date.now()}`,
+        metode_bayar: 'tunai',
+        subtotal,
+        diskon,
+        total,
+        total_pcs,
         uangDiterima,
         kembalian,
+        items: [...items],
       });
+      setItems([]);
+      setDiskon(0);
 
       confetti({
         particleCount: 80,
         spread: 60,
         origin: { y: 0.7 },
       });
-    } catch (err) {
-      alert('Gagal mencatat transaksi: ' + err);
+    } catch (err: any) {
+      alert('Gagal mencatat transaksi: ' + (err?.message || err));
     }
   };
 
   const handleQrisSuccess = (transaction: any) => {
     setShowQrisModal(false);
+    setLastSuccessTrans({
+      order_id: transaction?.order_id || `TRX-${Date.now()}`,
+      metode_bayar: 'qris',
+      subtotal: transaction?.subtotal || subtotal,
+      diskon: transaction?.diskon !== undefined ? transaction.diskon : diskon,
+      total: transaction?.total || total,
+      total_pcs: transaction?.total_pcs || total_pcs,
+      items: [...items],
+    });
     setItems([]);
     setDiskon(0);
-    setLastSuccessTrans(transaction);
 
     confetti({
       particleCount: 100,
       spread: 70,
       origin: { y: 0.6 },
     });
+  };
+
+  const handleTransferSuccess = async (catatanPengirim?: string) => {
+    try {
+      const res = await fetch('/api/transaksi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metode_bayar: 'transfer',
+          subtotal,
+          diskon,
+          total,
+          total_pcs,
+          status_pembayaran: 'settlement',
+          items,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Gagal menyimpan transaksi ke database');
+      }
+
+      setShowTransferModal(false);
+      setLastSuccessTrans({
+        order_id: data.transaction?.order_id || `TRX-${Date.now()}`,
+        metode_bayar: 'transfer',
+        subtotal,
+        diskon,
+        total,
+        total_pcs,
+        catatanPengirim,
+        items: [...items],
+      });
+      setItems([]);
+      setDiskon(0);
+
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.7 },
+      });
+    } catch (err: any) {
+      alert('Gagal mencatat transaksi: ' + (err?.message || err));
+    }
   };
 
   const getTagColorClass = (color: string) => {
@@ -249,62 +361,91 @@ export const PosCashier: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button
-              type="button"
-              onClick={() => setStoreOpen(!storeOpen)}
+          {/* Interactive Lapak Buka / Tutup Pill */}
+          <button
+            type="button"
+            onClick={handleToggleStore}
+            title={storeOpen ? 'Klik untuk Menutup Lapak' : 'Klik untuk Membuka Lapak'}
+            style={{
+              background: storeOpen ? '#ecfdf5' : '#fef2f2',
+              border: `1.5px solid ${storeOpen ? '#a7f3d0' : '#fecaca'}`,
+              borderRadius: '999px',
+              padding: '6px 14px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: storeOpen ? '#047857' : '#b91c1c',
+              transition: 'all 0.2s',
+              boxShadow: storeOpen ? '0 2px 6px rgba(16, 185, 129, 0.15)' : 'none',
+            }}
+          >
+            <span
               style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: storeOpen ? '#059669' : '#dc2626',
-              }}
-            >
-              <span
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: storeOpen ? '#10b981' : '#ef4444',
-                }}
-              />
-              <span>{storeOpen ? 'Lapak Buka' : 'Close Order'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setItems([]);
-                setDiskon(0);
-              }}
-              title="Reset Order"
-              style={{
-                background: '#fef2f2',
-                border: 'none',
+                width: '9px',
+                height: '9px',
                 borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: '#ef4444',
+                backgroundColor: storeOpen ? '#10b981' : '#ef4444',
+                boxShadow: storeOpen ? '0 0 8px rgba(16, 185, 129, 0.6)' : 'none',
               }}
-            >
-              <Power size={15} />
-            </button>
-          </div>
+            />
+            <span>{storeOpen ? 'Lapak Buka' : 'Lapak Tutup'}</span>
+            <Power size={13} style={{ opacity: 0.8 }} />
+          </button>
         </div>
 
-        {/* Category Carousel / Pills */}
+        {/* Lapak Tutup Alert Banner */}
+        {!storeOpen && (
+          <div
+            style={{
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '16px',
+              padding: '12px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '16px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '20px' }}>⛔</span>
+              <div>
+                <strong style={{ fontSize: '13px', color: '#991b1b', display: 'block' }}>
+                  Lapak Sedang Tutup
+                </strong>
+                <span style={{ fontSize: '12px', color: '#b91c1c' }}>
+                  Kasir tidak dapat memproses pesanan saat tutup. Buka lapak untuk melayani transaksi.
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleStore}
+              style={{
+                background: '#059669',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Buka Lapak Sekarang
+            </button>
+          </div>
+        )}
+
+        {/* Category Carousel / Pills with dynamic actual item counts */}
         <div className="category-row">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat.id;
+            const countLabel = getCategoryCount(cat.id);
             return (
               <div
                 key={cat.id}
@@ -324,7 +465,7 @@ export const PosCashier: React.FC = () => {
                   />
                 </div>
                 <div className="category-name">{cat.label}</div>
-                <div className="category-count">{cat.count}</div>
+                <div className="category-count">{countLabel}</div>
               </div>
             );
           })}
@@ -440,72 +581,92 @@ export const PosCashier: React.FC = () => {
 
       {/* RIGHT PANEL: Customer's Receipt / Cart */}
       <div className="pos-cart-panel">
-        {/* Header */}
+        {/* Header: Customer Name & Order ID */}
         <div className="cart-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '12px',
-                background: '#f1f5f9',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#475569',
-              }}
-            >
-              <Receipt size={18} />
-            </div>
-            <div>
-              {isEditingName ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    style={{
-                      fontSize: '15px',
-                      fontWeight: 700,
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      padding: '2px 6px',
-                      outline: 'none',
-                      width: '140px',
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingName(false)}
-                    style={{ background: '#2563eb', border: 'none', color: '#fff', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer' }}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '12px',
+                  background: '#f1f5f9',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#475569',
+                }}
+              >
+                <Receipt size={18} />
+              </div>
+              <div>
+                {isEditingName ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      style={{
+                        fontSize: '15px',
+                        fontWeight: 700,
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        padding: '2px 6px',
+                        outline: 'none',
+                        width: '140px',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingName(false)}
+                      style={{ background: '#2563eb', border: 'none', color: '#fff', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer' }}
+                    >
+                      <Check size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    className="cart-customer-title"
+                    onClick={() => setIsEditingName(true)}
+                    style={{ cursor: 'pointer' }}
                   >
-                    <Check size={12} />
-                  </button>
-                </div>
-              ) : (
-                <div
-                  className="cart-customer-title"
-                  onClick={() => setIsEditingName(true)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span>{customerName}</span>
-                  <Edit2 size={13} color="#94a3b8" />
-                </div>
-              )}
-              <div className="cart-order-num">Order Number: #TRX-1024</div>
+                    <span>{customerName}</span>
+                    <Edit2 size={13} color="#94a3b8" />
+                  </div>
+                )}
+                <div className="cart-order-num">Order Number: #TRX-1024</div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Sub-selectors */}
-        <div className="cart-controls-row">
-          <div className="cart-control-chip">
-            <span>{selectedLocation}</span>
-            <ChevronDown size={14} color="#94a3b8" />
-          </div>
-          <div className="cart-control-chip">
-            <span>{orderType}</span>
-            <ChevronDown size={14} color="#94a3b8" />
+            {/* Clear Cart Button */}
+            {items.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm('Kosongkan keranjang belanja?')) {
+                    setItems([]);
+                    setDiskon(0);
+                  }
+                }}
+                title="Kosongkan Keranjang"
+                style={{
+                  background: '#fef2f2',
+                  border: '1px solid #fee2e2',
+                  borderRadius: '10px',
+                  padding: '5px 10px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#ef4444',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <RotateCcw size={12} />
+                <span>Reset</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -616,7 +777,7 @@ export const PosCashier: React.FC = () => {
         {/* Summary breakdown */}
         <div style={{ marginBottom: '14px' }}>
           <div className="cart-summary-line">
-            <span>Subtotal</span>
+            <span>Subtotal ({total_pcs} pcs)</span>
             <span>{formatRupiah(subtotal)}</span>
           </div>
           <div className="cart-summary-line">
@@ -629,73 +790,114 @@ export const PosCashier: React.FC = () => {
           </div>
 
           <div className="cart-total-line">
-            <span className="cart-total-label">TOTAL</span>
+            <span className="cart-total-label">TOTAL TAGIHAN</span>
             <span className="cart-total-value">{formatRupiah(total)}</span>
           </div>
         </div>
 
-        {/* Discount & Payment Method Chips */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px', marginBottom: '14px' }}>
-          {/* Add Promo / Discount input pill */}
-          <div
+        {/* Discount Input Pill */}
+        <div
+          style={{
+            background: '#f8fafc',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '999px',
+            padding: '6px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '10px',
+          }}
+        >
+          <input
+            type="number"
+            placeholder="Diskon Potongan Harga (Rp)"
+            value={diskon || ''}
+            onChange={(e) => setDiskon(Math.max(0, Number(e.target.value)))}
             style={{
-              background: '#f8fafc',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '999px',
-              padding: '6px 12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              width: '85%',
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#1e293b',
             }}
-          >
-            <input
-              type="number"
-              placeholder="Diskon (Rp)"
-              value={diskon || ''}
-              onChange={(e) => setDiskon(Math.max(0, Number(e.target.value)))}
-              style={{
-                width: '80%',
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                fontSize: '12px',
-                fontWeight: 600,
-                color: '#1e293b',
-              }}
-            />
-            <Check size={14} color="#059669" />
-          </div>
+          />
+          <Check size={14} color="#059669" />
+        </div>
 
-          {/* Payment Method toggle */}
+        {/* Payment Method Selector (Tunai, QRIS, Transfer) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '14px' }}>
+          {/* Tunai */}
           <button
             type="button"
-            onClick={() => setSelectedPaymentMethod(selectedPaymentMethod === 'qris' ? 'tunai' : 'qris')}
+            onClick={() => setSelectedPaymentMethod('tunai')}
             style={{
-              background: '#f8fafc',
-              border: '1px solid var(--border-subtle)',
+              background: selectedPaymentMethod === 'tunai' ? '#ecfdf5' : '#f8fafc',
+              border: `1.5px solid ${selectedPaymentMethod === 'tunai' ? '#059669' : 'var(--border-subtle)'}`,
               borderRadius: '999px',
-              padding: '8px 12px',
-              fontSize: '12px',
+              padding: '8px 4px',
+              fontSize: '11px',
               fontWeight: 700,
-              color: '#1e293b',
+              color: selectedPaymentMethod === 'tunai' ? '#065f46' : '#64748b',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
+              gap: '4px',
+              transition: 'all 0.15s',
             }}
           >
-            {selectedPaymentMethod === 'qris' ? (
-              <>
-                <QrCode size={13} color="#2563eb" />
-                <span>QRIS Dinamis</span>
-              </>
-            ) : (
-              <>
-                <Banknote size={13} color="#059669" />
-                <span>Tunai (Cash)</span>
-              </>
-            )}
+            <Banknote size={13} color={selectedPaymentMethod === 'tunai' ? '#059669' : '#64748b'} />
+            <span>Tunai</span>
+          </button>
+
+          {/* QRIS */}
+          <button
+            type="button"
+            onClick={() => setSelectedPaymentMethod('qris')}
+            style={{
+              background: selectedPaymentMethod === 'qris' ? '#eff6ff' : '#f8fafc',
+              border: `1.5px solid ${selectedPaymentMethod === 'qris' ? '#2563eb' : 'var(--border-subtle)'}`,
+              borderRadius: '999px',
+              padding: '8px 4px',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: selectedPaymentMethod === 'qris' ? '#1e40af' : '#64748b',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+              transition: 'all 0.15s',
+            }}
+          >
+            <QrCode size={13} color={selectedPaymentMethod === 'qris' ? '#2563eb' : '#64748b'} />
+            <span>QRIS</span>
+          </button>
+
+          {/* Transfer */}
+          <button
+            type="button"
+            onClick={() => setSelectedPaymentMethod('transfer')}
+            style={{
+              background: selectedPaymentMethod === 'transfer' ? '#faf5ff' : '#f8fafc',
+              border: `1.5px solid ${selectedPaymentMethod === 'transfer' ? '#7c3aed' : 'var(--border-subtle)'}`,
+              borderRadius: '999px',
+              padding: '8px 4px',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: selectedPaymentMethod === 'transfer' ? '#6b21a8' : '#64748b',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+              transition: 'all 0.15s',
+            }}
+          >
+            <Landmark size={13} color={selectedPaymentMethod === 'transfer' ? '#7c3aed' : '#64748b'} />
+            <span>Transfer</span>
           </button>
         </div>
 
@@ -703,14 +905,20 @@ export const PosCashier: React.FC = () => {
         <button
           type="button"
           className="btn-place-order"
-          disabled={!valid}
+          disabled={!storeOpen || !valid}
           onClick={handleCheckoutClick}
+          style={{
+            opacity: !storeOpen || !valid ? 0.6 : 1,
+            cursor: !storeOpen || !valid ? 'not-allowed' : 'pointer',
+          }}
         >
-          <span>Place Order</span>
-          <span style={{ fontSize: '13px', opacity: 0.9 }}>({total_pcs} pcs)</span>
+          <span>{!storeOpen ? 'Lapak Sedang Tutup' : 'Place Order'}</span>
+          <span style={{ fontSize: '13px', opacity: 0.9 }}>
+            {!storeOpen ? '' : `(${total_pcs} pcs)`}
+          </span>
         </button>
 
-        {!valid && items.length > 0 && (
+        {!valid && items.length > 0 && storeOpen && (
           <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '8px', textAlign: 'center', fontWeight: 500 }}>
             ⚠️ {reason}
           </div>
@@ -743,6 +951,7 @@ export const PosCashier: React.FC = () => {
                     borderRadius: '14px',
                     border: '1px solid #cbd5e1',
                     outline: 'none',
+                    boxSizing: 'border-box',
                   }}
                 />
               </div>
@@ -763,6 +972,7 @@ export const PosCashier: React.FC = () => {
                     borderRadius: '14px',
                     border: '1px solid #cbd5e1',
                     outline: 'none',
+                    boxSizing: 'border-box',
                   }}
                 />
               </div>
@@ -825,7 +1035,16 @@ export const PosCashier: React.FC = () => {
         onSuccess={handleQrisSuccess}
       />
 
-      {/* Success Transaction Modal */}
+      {/* Bank Transfer Modal */}
+      <TransferModal
+        isOpen={showTransferModal}
+        total={total}
+        totalPcs={total_pcs}
+        onClose={() => setShowTransferModal(false)}
+        onSuccess={handleTransferSuccess}
+      />
+
+      {/* Success Transaction Receipt Modal */}
       {lastSuccessTrans && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ padding: '32px', textAlign: 'center', maxWidth: '420px' }}>
@@ -845,10 +1064,10 @@ export const PosCashier: React.FC = () => {
               <Sparkles size={36} />
             </div>
             <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#1e293b' }}>
-              Order Placed Successfully!
+              Transaksi Berhasil!
             </h3>
             <p style={{ fontSize: '13px', color: '#94a3b8', marginTop: '4px' }}>
-              {lastSuccessTrans.order_id}
+              Order ID: <strong style={{ color: '#64748b' }}>{lastSuccessTrans.order_id}</strong>
             </p>
 
             <div
@@ -857,26 +1076,96 @@ export const PosCashier: React.FC = () => {
                 padding: '18px',
                 borderRadius: '18px',
                 border: '1px solid #e2e8f0',
-                margin: '22px 0',
+                margin: '20px 0',
                 textAlign: 'left',
               }}
             >
+              {/* Conditional Payment Method Display */}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>
                 <span>Metode Pembayaran:</span>
-                <strong style={{ color: '#1e293b', textTransform: 'uppercase' }}>{lastSuccessTrans.metode_bayar}</strong>
+                <strong style={{ color: '#1e293b', fontWeight: 700 }}>
+                  {lastSuccessTrans.metode_bayar === 'tunai'
+                    ? 'Tunai (Cash)'
+                    : lastSuccessTrans.metode_bayar === 'qris'
+                    ? 'QRIS Dinamis'
+                    : 'Transfer Bank'}
+                </strong>
               </div>
+
+              {/* Total Pcs Terjual */}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>
-                <span>Total Item:</span>
-                <strong style={{ color: '#1e293b' }}>{lastSuccessTrans.total_pcs} pcs</strong>
+                <span>Jumlah Item Terjual:</span>
+                <strong style={{ color: '#1e293b', fontWeight: 800 }}>
+                  {lastSuccessTrans.total_pcs || 0} pcs
+                </strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', color: '#1e293b', paddingTop: '10px', borderTop: '1px dashed #cbd5e1' }}>
-                <span style={{ fontWeight: 600 }}>Total Lunas:</span>
-                <strong style={{ color: '#2563eb', fontWeight: 900 }}>{formatRupiah(lastSuccessTrans.total)}</strong>
+
+              {/* Subtotal */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>
+                <span>Subtotal:</span>
+                <strong style={{ color: '#1e293b' }}>
+                  {formatRupiah(lastSuccessTrans.subtotal || lastSuccessTrans.total)}
+                </strong>
               </div>
-              {lastSuccessTrans.kembalian !== undefined && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748b', marginTop: '6px' }}>
-                  <span>Kembalian:</span>
-                  <strong style={{ color: '#059669' }}>{formatRupiah(lastSuccessTrans.kembalian)}</strong>
+
+              {/* Diskon (hanya jika ada) */}
+              {lastSuccessTrans.diskon > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#059669', marginBottom: '8px' }}>
+                  <span>Potongan Diskon:</span>
+                  <strong style={{ fontWeight: 700 }}>
+                    -{formatRupiah(lastSuccessTrans.diskon)}
+                  </strong>
+                </div>
+              )}
+
+              {/* Total Tagihan (menggantikan 'Total Lunas' yang ambigu) */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '16px',
+                  color: '#1e293b',
+                  paddingTop: '10px',
+                  marginTop: '6px',
+                  borderTop: '1px dashed #cbd5e1',
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>Total Tagihan:</span>
+                <strong style={{ color: '#2563eb', fontWeight: 900, fontSize: '18px' }}>
+                  {formatRupiah(lastSuccessTrans.total)}
+                </strong>
+              </div>
+
+              {/* Uang Tunai Diterima & Kembalian (HANYA tampil jika metode Tunai!) */}
+              {lastSuccessTrans.metode_bayar === 'tunai' && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#64748b', marginTop: '8px' }}>
+                    <span>Uang Tunai:</span>
+                    <strong style={{ color: '#1e293b' }}>
+                      {formatRupiah(lastSuccessTrans.uangDiterima || lastSuccessTrans.total)}
+                    </strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#059669', marginTop: '6px' }}>
+                    <span style={{ fontWeight: 700 }}>Kembalian:</span>
+                    <strong style={{ fontWeight: 800, fontSize: '14px' }}>
+                      {formatRupiah(lastSuccessTrans.kembalian || 0)}
+                    </strong>
+                  </div>
+                </>
+              )}
+
+              {/* Status info for QRIS / Transfer */}
+              {lastSuccessTrans.metode_bayar === 'qris' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#059669', marginTop: '8px' }}>
+                  <CheckCircle size={14} />
+                  <span>QRIS Lunas Terverifikasi</span>
+                </div>
+              )}
+
+              {lastSuccessTrans.metode_bayar === 'transfer' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#7c3aed', marginTop: '8px' }}>
+                  <CheckCircle size={14} />
+                  <span>Transfer Bank Terkonfirmasi {lastSuccessTrans.catatanPengirim ? `(${lastSuccessTrans.catatanPengirim})` : ''}</span>
                 </div>
               )}
             </div>

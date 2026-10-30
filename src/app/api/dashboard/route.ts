@@ -11,10 +11,16 @@ export async function GET(req: Request) {
     const transactions = await getTransactions();
     const batches = await getBatches();
 
+    const toDateStr = (dateVal: any): string => {
+      if (!dateVal) return '';
+      if (dateVal instanceof Date) return dateVal.toISOString().split('T')[0];
+      return String(dateVal).split('T')[0];
+    };
+
     // Today's metrics (local date YYYY-MM-DD)
     const todayStr = new Date().toISOString().split('T')[0];
     const todayTrans = transactions.filter((t) => {
-      return t.created_at.startsWith(todayStr) && t.status_pembayaran === 'settlement';
+      return toDateStr(t.created_at) === todayStr && t.status_pembayaran === 'settlement';
     });
 
     const omzetHariIni = todayTrans.reduce((acc, t) => acc + t.total, 0);
@@ -56,7 +62,7 @@ export async function GET(req: Request) {
       const dayName = d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
 
       const dayTrans = transactions.filter(
-        (t) => t.created_at.startsWith(dStr) && t.status_pembayaran === 'settlement'
+        (t) => toDateStr(t.created_at) === dStr && t.status_pembayaran === 'settlement'
       );
       const dayOmzet = dayTrans.reduce((acc, t) => acc + t.total, 0);
       const dayPcs = dayTrans.reduce((acc, t) => acc + t.total_pcs, 0);

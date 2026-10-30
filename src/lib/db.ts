@@ -26,7 +26,7 @@ export interface TransactionItem {
 export interface Transaction {
   id: number;
   order_id: string;
-  metode_bayar: 'qris' | 'tunai';
+  metode_bayar: 'qris' | 'tunai' | 'transfer';
   subtotal: number;
   diskon: number;
   total: number;
@@ -251,7 +251,7 @@ export async function getTransactions(): Promise<Transaction[]> {
 
 export async function createTransaction(data: {
   order_id: string;
-  metode_bayar: 'qris' | 'tunai';
+  metode_bayar: 'qris' | 'tunai' | 'transfer';
   subtotal: number;
   diskon: number;
   total: number;

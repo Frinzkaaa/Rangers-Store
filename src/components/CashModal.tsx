@@ -15,6 +15,12 @@ interface CashModalProps {
 export const CashModal: React.FC<CashModalProps> = ({ total, isOpen, onClose, onSuccess }) => {
   const [uangDiterima, setUangDiterima] = useState<number>(total);
 
+  React.useEffect(() => {
+    if (isOpen) {
+      setUangDiterima(total);
+    }
+  }, [isOpen, total]);
+
   if (!isOpen) return null;
 
   const { kembalian, isEnough } = calculateChange(total, uangDiterima);
