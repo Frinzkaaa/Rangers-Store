@@ -137,7 +137,7 @@ export default function DashboardPage() {
               const heightPct = Math.max(10, Math.round((d.omzet / maxOmzet) * 100));
               return (
                 <div key={d.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                  <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, marginBottom: '6px', whiteIndex: 'nowrap' }}>
+                  <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, marginBottom: '6px', whiteSpace: 'nowrap' }}>
                     {d.omzet > 0 ? (d.omzet >= 1000000 ? `${(d.omzet / 1000000).toFixed(1)}M` : `${Math.round(d.omzet / 1000)}k`) : '0'}
                   </div>
                   <div
