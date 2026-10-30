@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { formatRupiah, calcNetProfit } from '../lib/calc';
+import { formatRupiah } from '../lib/calc';
 import { calculateChange } from '../lib/cart';
 import { Banknote, X, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -19,7 +19,6 @@ export const CashModal: React.FC<CashModalProps> = ({ total, isOpen, onClose, on
 
   const { kembalian, isEnough } = calculateChange(total, uangDiterima);
 
-  // Quick cash buttons
   const quickAmounts = [
     total,
     Math.ceil(total / 50000) * 50000,
@@ -32,11 +31,24 @@ export const CashModal: React.FC<CashModalProps> = ({ total, isOpen, onClose, on
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '440px', padding: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <div className="modal-content" style={{ maxWidth: '440px', padding: '26px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Banknote size={24} color="#059669" />
-            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>Pembayaran Tunai</h3>
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: '#ecfdf5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#059669',
+              }}
+            >
+              <Banknote size={20} />
+            </div>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1e293b' }}>Pembayaran Tunai</h3>
           </div>
           <button
             onClick={onClose}
@@ -46,15 +58,17 @@ export const CashModal: React.FC<CashModalProps> = ({ total, isOpen, onClose, on
           </button>
         </div>
 
-        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '20px', textAlign: 'center' }}>
-          <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>Total Tagihan</div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>
+        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '18px', border: '1px solid #e2e8f0', marginBottom: '20px', textAlign: 'center' }}>
+          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Total Tagihan
+          </div>
+          <div style={{ fontSize: '28px', fontWeight: 900, color: '#1e293b', marginTop: '2px', letterSpacing: '-0.02em' }}>
             {formatRupiah(total)}
           </div>
         </div>
 
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '8px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
             Uang Tunai Diterima (Rp)
           </label>
           <input
@@ -66,7 +80,7 @@ export const CashModal: React.FC<CashModalProps> = ({ total, isOpen, onClose, on
               padding: '12px 16px',
               fontSize: '18px',
               fontWeight: 700,
-              borderRadius: '8px',
+              borderRadius: '14px',
               border: '2px solid #cbd5e1',
               outline: 'none',
               boxSizing: 'border-box',
@@ -82,15 +96,15 @@ export const CashModal: React.FC<CashModalProps> = ({ total, isOpen, onClose, on
               key={amt}
               type="button"
               onClick={() => setUangDiterima(amt)}
-              className="btn btn-outline"
               style={{
                 fontSize: '12px',
-                padding: '6px 12px',
-                minHeight: '34px',
-                background: uangDiterima === amt ? '#ecfdf5' : 'white',
-                borderColor: uangDiterima === amt ? '#059669' : '#e2e8f0',
-                color: uangDiterima === amt ? '#059669' : '#334155',
+                padding: '7px 14px',
+                borderRadius: '999px',
+                border: `1px solid ${uangDiterima === amt ? '#2563eb' : '#e2e8f0'}`,
+                background: uangDiterima === amt ? '#eff6ff' : '#ffffff',
+                color: uangDiterima === amt ? '#2563eb' : '#475569',
                 fontWeight: 600,
+                cursor: 'pointer',
               }}
             >
               {amt === total ? 'Uang Pas' : formatRupiah(amt)}
@@ -102,7 +116,7 @@ export const CashModal: React.FC<CashModalProps> = ({ total, isOpen, onClose, on
         <div
           style={{
             padding: '14px 16px',
-            borderRadius: '10px',
+            borderRadius: '16px',
             marginBottom: '24px',
             display: 'flex',
             alignItems: 'center',
@@ -112,8 +126,8 @@ export const CashModal: React.FC<CashModalProps> = ({ total, isOpen, onClose, on
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {isEnough ? <CheckCircle size={20} color="#059669" /> : <AlertCircle size={20} color="#ef4444" />}
-            <span style={{ fontSize: '14px', fontWeight: 600, color: isEnough ? '#065f46' : '#991b1b' }}>
+            {isEnough ? <CheckCircle size={18} color="#059669" /> : <AlertCircle size={18} color="#ef4444" />}
+            <span style={{ fontSize: '13px', fontWeight: 600, color: isEnough ? '#065f46' : '#991b1b' }}>
               {isEnough ? 'Kembalian:' : 'Uang Kurang:'}
             </span>
           </div>
@@ -122,21 +136,38 @@ export const CashModal: React.FC<CashModalProps> = ({ total, isOpen, onClose, on
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '10px' }}>
           <button
             type="button"
-            className="btn btn-outline"
-            style={{ flex: 1 }}
             onClick={onClose}
+            style={{
+              flex: 1,
+              background: '#f1f5f9',
+              border: 'none',
+              borderRadius: '14px',
+              padding: '12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              color: '#64748b',
+            }}
           >
             Batal
           </button>
           <button
             type="button"
-            className="btn btn-emerald"
-            style={{ flex: 2 }}
             disabled={!isEnough}
             onClick={() => onSuccess(uangDiterima, kembalian)}
+            style={{
+              flex: 2,
+              background: isEnough ? '#059669' : '#94a3b8',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '14px',
+              padding: '12px',
+              fontWeight: 700,
+              cursor: isEnough ? 'pointer' : 'not-allowed',
+              boxShadow: isEnough ? '0 4px 12px rgba(5, 150, 105, 0.3)' : 'none',
+            }}
           >
             Selesaikan Transaksi
           </button>

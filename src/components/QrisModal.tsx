@@ -36,7 +36,6 @@ export const QrisModal: React.FC<QrisModalProps> = ({
     if (isOpen) {
       setLoading(true);
       setStatusMsg('Menghubungkan ke Midtrans Sandbox...');
-      // Request dynamic locked QRIS from backend
       fetch('/api/midtrans/charge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -109,11 +108,24 @@ export const QrisModal: React.FC<QrisModalProps> = ({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '440px', padding: '24px', textAlign: 'center' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <div className="modal-content" style={{ maxWidth: '440px', padding: '26px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <QrCode size={22} color="#6366f1" />
-            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>QRIS Dinamis</h3>
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: '#eff6ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#2563eb',
+              }}
+            >
+              <QrCode size={20} />
+            </div>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1e293b' }}>QRIS Dinamis</h3>
           </div>
           <button
             onClick={onClose}
@@ -124,36 +136,54 @@ export const QrisModal: React.FC<QrisModalProps> = ({
         </div>
 
         {/* Locked Amount Badge */}
-        <div style={{ background: '#eef2ff', padding: '12px', borderRadius: '12px', border: '1px solid #c7d2fe', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', color: '#4338ca', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            <ShieldCheck size={16} />
+        <div
+          style={{
+            background: '#eff6ff',
+            padding: '14px',
+            borderRadius: '16px',
+            border: '1px solid #bfdbfe',
+            marginBottom: '16px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '11px', color: '#1d4ed8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <ShieldCheck size={14} />
             <span>Nominal Terkunci Otomatis</span>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 900, color: '#1e1b4b', marginTop: '2px' }}>
+          <div style={{ fontSize: '28px', fontWeight: 900, color: '#1e3a8a', marginTop: '2px', letterSpacing: '-0.02em' }}>
             {formatRupiah(total)}
           </div>
-          <div style={{ fontSize: '11px', color: '#6366f1', marginTop: '2px' }}>
-            Pembeli tidak perlu ketik nominal manual
+          <div style={{ fontSize: '11px', color: '#3b82f6', marginTop: '2px' }}>
+            Total keranjang terkunci — pembeli tidak bisa salah ketik nominal
           </div>
         </div>
 
         {/* QR Code Container */}
-        <div style={{ background: '#ffffff', padding: '16px', borderRadius: '16px', border: '2px dashed #cbd5e1', display: 'inline-block', marginBottom: '16px', minWidth: '220px', minHeight: '220px' }}>
+        <div
+          style={{
+            background: '#ffffff',
+            padding: '16px',
+            borderRadius: '20px',
+            border: '2px dashed #cbd5e1',
+            display: 'inline-block',
+            marginBottom: '16px',
+            minWidth: '220px',
+            minHeight: '220px',
+          }}
+        >
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '200px', color: '#64748b', gap: '10px' }}>
-              <RefreshCw size={28} className="animate-spin" color="#6366f1" />
+              <RefreshCw size={28} className="animate-spin" color="#2563eb" />
               <span style={{ fontSize: '13px' }}>Membuat QRIS Dinamis...</span>
             </div>
           ) : qrUrl ? (
             <div>
-              {/* Render QR image */}
               <img
                 src={qrUrl}
                 alt="QRIS Midtrans"
                 style={{ width: '200px', height: '200px', objectFit: 'contain', display: 'block', margin: '0 auto' }}
               />
               <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '8px', fontWeight: 500 }}>
-                Scan via GoPay, BCA, Mandiri, ShopeePay, Dana dll
+                Scan via GoPay, BCA, Mandiri, ShopeePay, Dana, dll
               </div>
             </div>
           ) : (
@@ -165,8 +195,8 @@ export const QrisModal: React.FC<QrisModalProps> = ({
         </div>
 
         {/* Order ID & Status */}
-        <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px', background: '#f8fafc', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-          <div>Order ID: <strong style={{ color: '#0f172a' }}>{orderId || '-'}</strong></div>
+        <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px', background: '#f8fafc', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          <div>Order ID: <strong style={{ color: '#1e293b' }}>{orderId || '-'}</strong></div>
           <div style={{ marginTop: '2px', color: '#059669', fontWeight: 600 }}>{statusMsg}</div>
         </div>
 
@@ -174,23 +204,50 @@ export const QrisModal: React.FC<QrisModalProps> = ({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <button
             type="button"
-            className="btn btn-emerald"
             disabled={loading || checking}
             onClick={handleSimulatePayment}
-            style={{ fontSize: '14px', fontWeight: 700 }}
+            style={{
+              width: '100%',
+              background: '#2563eb',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '14px',
+              padding: '12px',
+              fontSize: '14px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+            }}
           >
-            <CheckCircle size={18} />
+            <CheckCircle size={16} />
             <span>Simulasi Pembayaran Berhasil</span>
           </button>
 
           <button
             type="button"
-            className="btn btn-outline"
             disabled={loading || checking}
             onClick={handleCheckStatus}
-            style={{ fontSize: '13px' }}
+            style={{
+              width: '100%',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '14px',
+              padding: '10px',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#475569',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
           >
-            <RefreshCw size={16} className={checking ? 'animate-spin' : ''} />
+            <RefreshCw size={14} className={checking ? 'animate-spin' : ''} />
             <span>Cek Status Pembayaran</span>
           </button>
         </div>

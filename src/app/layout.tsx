@@ -3,7 +3,7 @@ import './globals.css';
 import Navbar from '../components/Navbar';
 
 export const metadata: Metadata = {
-  title: 'Rangers Store - POS & Kasir Thrifting',
+  title: 'Rangers Store - POS & Kasir Thrifting Mall',
   description: 'Aplikasi kasir pintar dan POS thrifting mall & bazar dengan QRIS dinamis terkunci',
   icons: {
     icon: '/favicon.ico',
@@ -18,8 +18,10 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body>
-        <Navbar />
-        <main>{children}</main>
+        <div className="app-shell">
+          <Navbar />
+          <main>{children}</main>
+        </div>
       </body>
     </html>
   );

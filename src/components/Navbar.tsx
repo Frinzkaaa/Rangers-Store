@@ -17,34 +17,52 @@ export const Navbar: React.FC = () => {
   ];
 
   return (
-    <header className="navbar-container">
-      <div className="navbar-inner">
-        <Link href="/pos" style={{ textDecoration: 'none' }}>
-          <Logo size="md" />
-        </Link>
+    <header className="navbar-floating">
+      <Link href="/pos" style={{ textDecoration: 'none' }}>
+        <Logo size="md" />
+      </Link>
 
-        <nav className="nav-menu">
-          {links.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href || (link.href === '/pos' && pathname === '/');
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`nav-item ${isActive ? 'active' : ''}`}
-              >
-                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                <span>{link.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+      <nav className="nav-links-row">
+        {links.map((link) => {
+          const Icon = link.icon;
+          const isActive = pathname === link.href || (link.href === '/pos' && pathname === '/');
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`nav-pill ${isActive ? 'active' : ''}`}
+            >
+              <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
+              <span>{link.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
 
-        <div className="nav-badge-wrapper">
-          <div className="sandbox-badge">
-            <span className="badge-dot" />
-            <span className="badge-text">Midtrans Sandbox</span>
-          </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            color: '#1d4ed8',
+            padding: '6px 12px',
+            borderRadius: '999px',
+            fontSize: '12px',
+            fontWeight: 700,
+          }}
+        >
+          <span
+            style={{
+              width: '7px',
+              height: '7px',
+              borderRadius: '50%',
+              backgroundColor: '#2563eb',
+            }}
+          />
+          <span>Midtrans Sandbox</span>
         </div>
       </div>
     </header>
