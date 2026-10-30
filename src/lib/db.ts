@@ -259,15 +259,22 @@ export async function createTransaction(data: {
   status_pembayaran: 'pending' | 'settlement';
   midtrans_transaction_id?: string;
   midtrans_qr_url?: string;
-  items: Array<{ harga_satuan: number; qty: number; subtotal: number }>;
+  items: Array<{ harga_satuan: number; qty: number; subtotal?: number }>;
 }): Promise<Transaction> {
   const defaultHpp = await getActiveAverageHpp();
   const sql = getNeonSql();
 
-  const itemsWithHpp: TransactionItem[] = data.items.map((it) => ({
-    ...it,
-    modal_satuan_tercatat: defaultHpp,
-  }));
+  const itemsWithHpp: TransactionItem[] = (data.items || []).map((it) => {
+    const harga_satuan = Number(it.harga_satuan) || 0;
+    const qty = Number(it.qty) || 1;
+    const subtotal = it.subtotal !== undefined && it.subtotal !== null ? Number(it.subtotal) : harga_satuan * qty;
+    return {
+      harga_satuan,
+      qty,
+      subtotal,
+      modal_satuan_tercatat: defaultHpp,
+    };
+  });
 
   if (sql) {
     const rows = await sql`

@@ -30,7 +30,11 @@ export async function POST(req: Request) {
       status_pembayaran: 'pending',
       midtrans_transaction_id: qrisResult.transaction_id,
       midtrans_qr_url: qrisResult.qr_url,
-      items: body.items || [],
+      items: (body.items || []).map((it: any) => ({
+        harga_satuan: Number(it.harga_satuan) || 0,
+        qty: Number(it.qty) || 1,
+        subtotal: it.subtotal !== undefined ? Number(it.subtotal) : (Number(it.harga_satuan) || 0) * (Number(it.qty) || 1),
+      })),
     });
 
     return NextResponse.json({
