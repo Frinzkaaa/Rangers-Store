@@ -11,6 +11,7 @@ interface QrisModalProps {
   subtotal: number;
   diskon: number;
   totalPcs: number;
+  customerName?: string;
   items: CartItem[];
   onClose: () => void;
   onSuccess: (transaction: any) => void;
@@ -22,6 +23,7 @@ export const QrisModal: React.FC<QrisModalProps> = ({
   subtotal,
   diskon,
   totalPcs,
+  customerName,
   items,
   onClose,
   onSuccess,
@@ -44,6 +46,7 @@ export const QrisModal: React.FC<QrisModalProps> = ({
           diskon,
           total,
           total_pcs: totalPcs,
+          customer_name: customerName || 'Pelanggan',
           items,
         }),
       })

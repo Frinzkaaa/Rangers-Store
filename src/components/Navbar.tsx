@@ -4,13 +4,14 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from './Logo';
-import { ShoppingBag, LayoutDashboard, Package, CircleDollarSign, Zap } from 'lucide-react';
+import { ShoppingBag, LayoutDashboard, Package, CircleDollarSign, Receipt } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
 
   const links = [
     { href: '/pos', label: 'Kasir POS', icon: ShoppingBag },
+    { href: '/transaksi', label: 'Transaksi', icon: Receipt },
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/batches', label: 'Batch Bal', icon: Package },
     { href: '/keuangan', label: 'Keuangan & Laba', icon: CircleDollarSign },

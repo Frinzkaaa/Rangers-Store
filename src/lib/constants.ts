@@ -7,6 +7,7 @@ export const BRAND = {
 
 export const NAV_LINKS = [
   { href: '/pos', label: 'Kasir POS', icon: 'ShoppingBag' },
+  { href: '/transaksi', label: 'Transaksi', icon: 'Receipt' },
   { href: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
   { href: '/batches', label: 'Batch Bal', icon: 'Package' },
   { href: '/keuangan', label: 'Keuangan & Laba', icon: 'CircleDollarSign' },

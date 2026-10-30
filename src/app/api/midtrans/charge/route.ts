@@ -22,6 +22,7 @@ export async function POST(req: Request) {
     // Record pending transaction in DB
     const transaction = await createTransaction({
       order_id,
+      customer_name: body.customer_name || 'Pelanggan',
       metode_bayar: 'qris',
       subtotal: body.subtotal || total,
       diskon: body.diskon || 0,

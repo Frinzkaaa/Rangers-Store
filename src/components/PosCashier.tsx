@@ -195,10 +195,12 @@ export const PosCashier: React.FC = () => {
 
   const handleCashSuccess = async (uangDiterima: number, kembalian: number) => {
     try {
+      const cust = customerName.trim() || 'Pelanggan';
       const res = await fetch('/api/transaksi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          customer_name: cust,
           metode_bayar: 'tunai',
           subtotal,
           diskon,
@@ -217,6 +219,7 @@ export const PosCashier: React.FC = () => {
       setShowCashModal(false);
       setLastSuccessTrans({
         order_id: data.transaction?.order_id || `TRX-${Date.now()}`,
+        customer_name: cust,
         metode_bayar: 'tunai',
         subtotal,
         diskon,
@@ -243,6 +246,7 @@ export const PosCashier: React.FC = () => {
     setShowQrisModal(false);
     setLastSuccessTrans({
       order_id: transaction?.order_id || `TRX-${Date.now()}`,
+      customer_name: transaction?.customer_name || customerName || 'Pelanggan',
       metode_bayar: 'qris',
       subtotal: transaction?.subtotal || subtotal,
       diskon: transaction?.diskon !== undefined ? transaction.diskon : diskon,
@@ -262,10 +266,12 @@ export const PosCashier: React.FC = () => {
 
   const handleTransferSuccess = async (catatanPengirim?: string) => {
     try {
+      const cust = customerName.trim() || 'Pelanggan';
       const res = await fetch('/api/transaksi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          customer_name: cust,
           metode_bayar: 'transfer',
           subtotal,
           diskon,
@@ -284,6 +290,7 @@ export const PosCashier: React.FC = () => {
       setShowTransferModal(false);
       setLastSuccessTrans({
         order_id: data.transaction?.order_id || `TRX-${Date.now()}`,
+        customer_name: cust,
         metode_bayar: 'transfer',
         subtotal,
         diskon,
@@ -1030,6 +1037,7 @@ export const PosCashier: React.FC = () => {
         subtotal={subtotal}
         diskon={diskon}
         totalPcs={total_pcs}
+        customerName={customerName}
         items={items}
         onClose={() => setShowQrisModal(false)}
         onSuccess={handleQrisSuccess}

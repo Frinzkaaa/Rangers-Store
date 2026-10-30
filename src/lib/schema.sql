@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS batches (
 CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY,
     order_id VARCHAR(50) UNIQUE NOT NULL,
-    metode_bayar VARCHAR(20) NOT NULL, -- 'qris' or 'tunai'
+    customer_name VARCHAR(100) DEFAULT 'Pelanggan',
+    metode_bayar VARCHAR(20) NOT NULL, -- 'qris', 'tunai', or 'transfer'
     subtotal INT NOT NULL,
     diskon INT NOT NULL DEFAULT 0,
     total INT NOT NULL,
