@@ -264,52 +264,26 @@ export const PosCashier: React.FC = () => {
     });
   };
 
-  const handleTransferSuccess = async (catatanPengirim?: string) => {
-    try {
-      const cust = customerName.trim() || 'Pelanggan';
-      const res = await fetch('/api/transaksi', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_name: cust,
-          metode_bayar: 'transfer',
-          subtotal,
-          diskon,
-          total,
-          total_pcs,
-          status_pembayaran: 'settlement',
-          items,
-        }),
-      });
+  const handleTransferSuccess = (transaction: any) => {
+    setShowTransferModal(false);
+    setLastSuccessTrans({
+      order_id: transaction?.order_id || `TRX-${Date.now()}`,
+      customer_name: transaction?.customer_name || customerName || 'Pelanggan',
+      metode_bayar: 'transfer',
+      subtotal: transaction?.subtotal || subtotal,
+      diskon: transaction?.diskon !== undefined ? transaction.diskon : diskon,
+      total: transaction?.total || total,
+      total_pcs: transaction?.total_pcs || total_pcs,
+      items: [...items],
+    });
+    setItems([]);
+    setDiskon(0);
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Gagal menyimpan transaksi ke database');
-      }
-
-      setShowTransferModal(false);
-      setLastSuccessTrans({
-        order_id: data.transaction?.order_id || `TRX-${Date.now()}`,
-        customer_name: cust,
-        metode_bayar: 'transfer',
-        subtotal,
-        diskon,
-        total,
-        total_pcs,
-        catatanPengirim,
-        items: [...items],
-      });
-      setItems([]);
-      setDiskon(0);
-
-      confetti({
-        particleCount: 80,
-        spread: 60,
-        origin: { y: 0.7 },
-      });
-    } catch (err: any) {
-      alert('Gagal mencatat transaksi: ' + (err?.message || err));
-    }
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
   };
 
   const getTagColorClass = (color: string) => {
@@ -1047,7 +1021,11 @@ export const PosCashier: React.FC = () => {
       <TransferModal
         isOpen={showTransferModal}
         total={total}
+        subtotal={subtotal}
+        diskon={diskon}
         totalPcs={total_pcs}
+        customerName={customerName}
+        items={items}
         onClose={() => setShowTransferModal(false)}
         onSuccess={handleTransferSuccess}
       />
