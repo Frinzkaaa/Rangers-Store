@@ -136,7 +136,12 @@ export async function verifySessionToken(token: string): Promise<UserSession | n
     const signatureBytes = hexToUint8Array(signatureHex);
 
     const key = await getCryptoKey();
-    const isValid = await crypto.subtle.verify('HMAC', key, signatureBytes, dataToVerify);
+    const isValid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      signatureBytes as unknown as BufferSource,
+      dataToVerify as unknown as BufferSource
+    );
 
     if (!isValid) return null;
 

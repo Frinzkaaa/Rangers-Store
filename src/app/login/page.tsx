@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Logo } from '../../components/Logo';
 import {
@@ -16,7 +16,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromPath = searchParams.get('from') || '/pos';
@@ -520,5 +520,30 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#0f172a',
+            color: '#94a3b8',
+            fontSize: '14px',
+            fontWeight: 600,
+          }}
+        >
+          <span>Memuat halaman login...</span>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
