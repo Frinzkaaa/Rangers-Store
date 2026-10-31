@@ -66,6 +66,29 @@ body {
   padding: 16px 20px;
 }
 
+/* Full-bleed Login Page without outer gaps/padding */
+body:has(.login-fullscreen) {
+  padding: 0 !important;
+  background: #0b0f19 !important;
+  overflow: hidden;
+}
+
+body:has(.login-fullscreen) .app-shell {
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.login-fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  overflow-y: auto;
+  z-index: 9999;
+}
+
 /* App Wrapper Container */
 .app-shell {
   max-width: 1440px;

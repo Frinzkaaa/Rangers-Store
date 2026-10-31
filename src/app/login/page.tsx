@@ -99,15 +99,21 @@ function LoginForm() {
 
   return (
     <div
+      className="login-fullscreen"
       style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
-        padding: '20px',
-        position: 'relative',
-        overflow: 'hidden',
+        background: 'linear-gradient(135deg, #0b0f19 0%, #1e1b4b 50%, #0f172a 100%)',
+        padding: '24px 16px',
+        overflowY: 'auto',
+        zIndex: 9999,
+        margin: 0,
       }}
     >
       {/* Decorative background glows */}
@@ -528,15 +534,20 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div
+          className="login-fullscreen"
           style={{
-            minHeight: '100vh',
+            position: 'fixed',
+            inset: 0,
+            width: '100vw',
+            height: '100vh',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#0f172a',
+            background: '#0b0f19',
             color: '#94a3b8',
             fontSize: '14px',
             fontWeight: 600,
+            zIndex: 9999,
           }}
         >
           <span>Memuat halaman login...</span>
